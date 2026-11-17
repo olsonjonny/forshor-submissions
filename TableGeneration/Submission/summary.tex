@@ -1,0 +1,51 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+
+\title{PhaseProduct: wider splits with width-tuned, negation-free tables}
+\author{olsonjonny}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Objective}
+A PhaseProduct policy, so it enters both the PhaseProduct board ($n = 2048$) and the full order-finding board. Both rank by $Q \times T$ at $\delta = 0.01$.
+
+\section*{Starting point}
+The baseline we compared against is the starting PhaseProduct policy (one band, $k = 3$, points $0, 1, \infty, -1, -2$, from the Parallel sequences appendix of Kahanamoku-Meyer and Yao (2024)), whose exact ladder at 2048 is $2048{:}3 \to 687{:}3 \to 232{:}3 \to 81{:}3 \to 30{:}\mathrm{leaf}$.
+The tables here are new; neither reuses a program from that paper. The construction is the one of our PhaseTripleProduct entries (olsonjonny\_sub1), applied to $2k-1$ points.
+
+\section*{Construction}
+Two bands: $k = 5$ for $w \ge 400$ and $k = 3$ for $64 \le w < 400$; the leaf below.
+PhaseProduct exact ladder at 2048: $2048{:}5 \to 419{:}5 \to 93{:}3 \to 34{:}\mathrm{leaf}$. Full run (balanced IR): $2348{:}5 \to 479{:}5 \to 105{:}3 \to 38{:}\mathrm{leaf}$.
+
+\emph{Points.} Only $0$, $\infty$, $\pm 2^e$ and $\pm 2^{-e}$. For each table we took the $2k-1$ points of smallest exact demand at the width where it is first used (the signed top limb has width $w - (k-1)\lfloor w/k \rfloor$, so integer and reciprocal points of the same size differ in demand):
+\begin{itemize}
+  \item $k = 5$ (chosen at 2048, also used at 419): $0, \infty, \pm 1, \pm 2, \pm\tfrac12, -\tfrac14$;
+  \item $k = 3$ (chosen at 93): $0, \infty, \pm 1, -2$.
+\end{itemize}
+
+\emph{Programs.} Integer points are accumulated in register $0$ and reciprocal points in register $k-1$ by \texttt{addScaled} with shifts, visited in the order that minimises the number of additions between consecutive rows, and undone at the end: 36 additions for $k = 5$ and 8 for $k = 3$, and no \texttt{negate} (which this cost model charges about $12w$ Toffolis, against about $w$ for an addition).
+
+\section*{Prices}
+\texttt{starter.py price} (via \texttt{forshor policy order-finding}) printed for this policy:
+\begin{itemize}
+  \item PhaseProduct board (exact widths): $T = 10{,}264{,}855$; ladder $2048{:}5 \to 419{:}5 \to 93{:}3 \to 34{:}\mathrm{leaf}$; rotations $27{,}540 \times 69.7188$ T, Toffoli-class $2{,}086{,}200 \times 4$ T; engine 2 agrees;
+  $Q = 4{,}301$ (live-qubit peak, formula); $Q \times T = 4.414914 \times 10^{10}$ (starting policy $5.884226 \times 10^{10}$).
+  \item Full order finding: single run $1{,}601{,}145{,}445{,}134$ T, $Q = 13{,}396$, $Q \times T = 2.144894 \times 10^{16}$ (starting policy $2.568436 \times 10^{16}$); 386 trials, end to end $6.180421 \times 10^{14}$ T; main ladder $2348{:}5 \to 479{:}5 \to 105{:}3 \to 38{:}\mathrm{leaf}$.
+  \item Cross-checks (not the score): PhaseProduct scanned widths $26{,}530{,}092$ T, ladder $2048{:}5 \to 458{:}5 \to 140{:}3 \to 58{:}\mathrm{leaf}$; full run upstream ForShor IR (scanned widths, no split) $6{,}936{,}851{,}270{,}695$ T. The scan charges a bit per addition along a chain, so it is pessimistic for these addition chains.
+\end{itemize}
+
+\section*{How it was found}
+Priced in-process with the pack's own engine (the functions \texttt{starter.py price} calls), over every sequence of 1 to 5 levels with $k$ from 2 to 6, this was the lowest PhaseProduct $Q \times T$.
+Close behind: $2048{:}6 \to 354{:}4 \to 94{:}3 \to 35$ ($4.430 \times 10^{10}$) and $2048{:}6 \to 354{:}3 \to 121{:}4 \to 35$ ($4.436 \times 10^{10}$). We did not search for the full run's own optimum.
+
+\section*{What is not proved}
+T counted in Python (Qualtran), not proved in Lean.
+Q is the live-qubit peak, a formula over the policy's widths, not proved in Lean for this policy.
+The site prices the policy again; its numbers are the ones that count.
+
+Prepared with Claude Code (Claude Opus 5.5) using the starter pack's engine.
+
+\end{document}
