@@ -1,0 +1,50 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+
+\title{PhaseTripleProduct: fewest qubits with a Toom-Cook split}
+\author{olsonjonny}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Objective}
+PhaseTripleProduct board, $n = 2048$, $\delta = 0.01$, exact widths. This entry minimises the logical qubit count $Q$, not $Q \times T$ (our best $Q \times T$ is olsonjonny\_sub1).
+
+\section*{Where the qubits are}
+The board's $Q$ is $3n$ for the operands, plus $2$ for the leaf, plus the largest scratch any node holds ($1$ when a table adds), plus, for each level on the recursion path, $3\,(k\,w_{\mathrm{child}} - w)$: the qubits that grow the three operands from $w$ bits to $k$ limbs of the common child width.
+With no split at all, $Q = 3n + 2 = 6{,}146$, but then nothing is gained over the schoolbook leaf.
+A split pays $3\,(k\,w_{\mathrm{child}} - w)$, so the cheapest one has small $k$ and small guard bits.
+
+\section*{Construction}
+One band: $k = 3$ for $w \ge 1024$; the leaf below. At $n = 2048$ the exact ladder is $2048{:}3 \to 687{:}\mathrm{leaf}$: $7$ leaves of width $687$, and $3 \times 687 - 2048 = 13$, so the split costs $3 \times 13 + 1 = 40$ qubits.
+
+\emph{Points.} The contract admits $0$, $\infty$, $\pm 2^e$ and $\pm 2^{-e}$. At $2048 = 2 \times 682 + 684$ the signed top limb is 2 bits wider than the others, so reciprocal points are cheaper than integer ones of the same size.
+We use $0, \infty, \pm 1, \pm\tfrac12, -2$: every one of them fits 687 signed bits, and 687 is the least child width any 7 admissible points allow (the seventh point must be $\pm 2$, which needs 687; $\pm\tfrac14$ needs 688 and $4$ needs 689).
+
+\emph{Program.} Integer points are accumulated in register $0$ and reciprocal points in register $2$ by \texttt{addScaled} with shifts, visited in the order that minimises the number of additions, and undone at the end: 13 additions, no \texttt{negate}.
+
+\section*{Prices}
+\texttt{starter.py price} (via \texttt{forshor policy ptp}) printed for this policy:
+\begin{itemize}
+  \item board (exact widths): $T = 159{,}921{,}135$; ladder $2048{:}3 \to 687{:}\mathrm{leaf}$;
+  rotations $14{,}413 \times 66.8462$ T, Toffoli-class $39{,}739{,}420 \times 4$ T; engine 2 $159{,}921{,}135$ T (agree);
+  \item $Q = 6{,}186$ (live-qubit peak, formula); score $Q \times T = 9.892721 \times 10^{11}$;
+  \item cross-check (scanned widths, not the score): $166{,}478{,}929$ T, ladder $2048{:}3 \to 701{:}\mathrm{leaf}$.
+\end{itemize}
+For comparison, the starting policy has $Q = 6{,}339$ and $T = 97{,}630{,}311$.
+
+\section*{Other low-$Q$ points}
+Priced in-process with the pack's own engine (the functions \texttt{starter.py price} calls), over every sequence of 1 to 4 levels with $k$ from 2 to 8, the lowest T at each $Q$ below the starting policy's was:
+$Q = 6{,}186$ (this policy); $6{,}222$ ($2048{:}3 \to 687{:}3 \to 233$, $T \approx 1.31 \times 10^8$); $6{,}267$ ($2048{:}4 \to 519{:}3 \to 177$, $T \approx 1.09 \times 10^8$); $6{,}303$ ($2048{:}4 \to 519{:}3 \to 177{:}3 \to 63$, $T \approx 1.03 \times 10^8$).
+A $k = 2$ split ($Q = 6{,}159$) does not lower T: four products of half width cost as much as one.
+
+\section*{What is not proved}
+T counted in Python (Qualtran), not proved in Lean.
+Q is the live-qubit peak, a formula over the policy's widths, not proved in Lean for this policy.
+The site prices the policy again; its numbers are the ones that count.
+
+Prepared with Claude Code (Claude Opus 5.5) using the starter pack's engine.
+
+\end{document}
