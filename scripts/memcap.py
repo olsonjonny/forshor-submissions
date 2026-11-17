@@ -3,12 +3,12 @@
 
     memcap.py --cap-gb 10 --timeout 1800 --log run.mem.json -- CMD ARGS...
 
-Polls every second the memory of the whole process tree as `top` reports it
-(`-stats mem`: resident + compressed, which RSS alone hides) and kills the
+Polls every second the whole process tree's resident plus swapped memory on Linux,
+or `top -stats mem` (resident + compressed) on macOS, and kills the
 tree when the sum exceeds the cap or the timeout passes. Writes peak memory,
 wall time and outcome to --log. Exit code: the command's, or 137 if killed.
 """
-import argparse, json, os, re, signal, subprocess, sys, time
+import argparse, json, os, platform, re, signal, subprocess, sys, time
 from pathlib import Path
 
 UNITS = {"B": 1, "K": 1 << 10, "M": 1 << 20, "G": 1 << 30}
@@ -53,8 +53,12 @@ def main():
     t0 = time.monotonic()
     p = subprocess.Popen(cmd, start_new_session=True)
     peak, outcome = 0, None
+    peak_process_count = 0
     while p.poll() is None:
-        total = sum(mem(q) for q in tree(p.pid))
+        processes = tree(p.pid)
+        total = sum(mem(q) for q in processes)
+        if total > peak:
+            peak_process_count = len(processes)
         peak = max(peak, total)
         if total > cap:
             outcome = f"killed: memory {total / (1 << 30):.2f} GB > cap {a.cap_gb} GB"
@@ -67,7 +71,16 @@ def main():
         time.sleep(1)
     rc = 137 if outcome else p.returncode
     rec = {"cmd": cmd, "exit": rc, "outcome": outcome or "finished", "peak_gb": round(peak / (1 << 30), 2),
-           "seconds": round(time.monotonic() - t0, 1), "cap_gb": a.cap_gb}
+           "seconds": round(time.monotonic() - t0, 1), "cap_gb": a.cap_gb,
+           "platform": sys.platform, "architecture": platform.machine(),
+           "memory_metric": "sum(VmRSS + VmSwap)" if sys.platform.startswith("linux") else "sum(top mem: resident + compressed)",
+           "memory_unit": "GiB", "peak_process_count": peak_process_count}
+    if sys.platform.startswith("linux"):
+        try:
+            host = Path("/proc/meminfo").read_text()
+            rec["host_memory_gb"] = round(int(re.search(r"^MemTotal:\s+(\d+)\s+kB", host, re.M).group(1)) / (1 << 20), 2)
+        except (OSError, AttributeError):
+            pass  # Diagnostics must not change the command's result.
     if a.log:
         with open(a.log, "w") as f:
             json.dump(rec, f)

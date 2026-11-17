@@ -14,6 +14,8 @@ Bootstrap explicitly fetches the compiled `Mathlib` root. The cache tool does no
 
 The verification job is bounded to 30 minutes in total, including setup, ForShor, and the STO mirror. The mirror also has a 10-minute overall limit. `POLICY_STAGE_TIMEOUT=900` bounds individual STO replay stages; it is not a separate ForShor deadline. The outer job limit covers the ForShor harness as well. The trusted Qualtran/archive/publication job is bounded to 20 minutes. A resource timeout or exhausted memory is an infrastructure limit, not a mathematical verdict. Timings are retained in the `policy-bootstrap` artifact. The large disposable Lean tree is excluded from result artifacts; `verification.json`, identity, outcomes, and logs are retained.
 
+The shared policy intake gives each mirror replay stage a 12 GiB process-tree memory cap, including checks run locally and any replay during publication. The hosted public-repository Linux runner has 16 GB RAM; the cap leaves headroom for the rest of the job. Replay diagnostics include peak usage, platform, architecture, accounting method and process count at the peak. Linux sums resident and swapped memory; macOS uses `top`'s resident-plus-compressed measure, so cross-platform peaks are not directly equivalent. A policy stopped at the cap has not received a mathematical rejection. Investigate another cap hit before raising it further.
+
 ## Source restrictions before compilation
 
 The trusted `scripts/ci/policy_source.py` filter runs before dependency setup or

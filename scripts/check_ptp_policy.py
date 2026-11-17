@@ -202,7 +202,7 @@ def replay(mod, a, rec):
     rec["replay"].append({"module": mod, "verdict": rj["verdict"], "decls": rj.get("decls"),
                           "theorems": len(rj["theorems"]), "axiom_union": axioms,
                           "sorry": any(t["sorry"] for t in rj["theorems"]),
-                          "peak_gb": mem.get("peak_gb"), "seconds": mem.get("seconds")})
+                          "peak_gb": mem.get("peak_gb"), "seconds": mem.get("seconds"), "memory": mem})
     if rj["verdict"] != "replayed":
         raise Reject("replay", f"{mod}: {rj['verdict']}")
     return rj["theorems"]

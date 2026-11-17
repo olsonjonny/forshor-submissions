@@ -247,6 +247,19 @@ def test_the_harness_stage_timeout_is_passed_only_when_asked_for(tmp_path):
 ARGV_STUB = STUB.replace('rec = {"tool": "stub",', 'rec = {"tool": "stub", "argv": args,')
 
 
+@pytest.mark.parametrize("board,policy", [("pp", PP_POLICY), ("ptp", PTP_POLICY)])
+def test_shared_replay_budget_reaches_both_harnesses_without_removing_limits(tmp_path, board, policy):
+    tree = make_tree(tmp_path, stub=ARGV_STUB)
+    default = evidence.run_mirror(policy, board, tree, tmp_path / "default", stage_timeout=900, fast=True)
+    argv = default["record"]["argv"]
+    assert argv[argv.index("--cap-gb") + 1] == "12.0"
+    assert argv[argv.index("--timeout") + 1] == "900"
+    assert "--fast" in argv
+    tighter = evidence.run_mirror(policy, board, tree, tmp_path / "tighter", cap_gb=8.0)
+    argv = tighter["record"]["argv"]
+    assert argv[argv.index("--cap-gb") + 1] == "8.0"
+
+
 def test_fast_is_passed_to_either_harness_when_asked_for(tmp_path):
     ptp = evidence.run_mirror(PTP_POLICY, "ptp", make_tree(tmp_path / "a", stub=ARGV_STUB), tmp_path / "oa", fast=True)
     assert "--fast" in ptp["record"]["argv"]

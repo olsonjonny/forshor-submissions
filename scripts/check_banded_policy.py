@@ -384,7 +384,7 @@ def main(argv=None) -> int:
                 raise Reject("replay", f"{mod}: no trusted output ({mem.get('outcome')})", (p.stdout + p.stderr)[-4000:])
             rj = json.loads(lines[lines.index(f"AF_TRUSTED_{nonce}") + 1])
             rec["replay"]["modules"].append({"module": mod, "verdict": rj["verdict"], "decls": rj.get("decls"),
-                                             "peak_gb": mem.get("peak_gb"), "seconds": mem.get("seconds")})
+                                             "peak_gb": mem.get("peak_gb"), "seconds": mem.get("seconds"), "memory": mem})
             if rj["verdict"] != "replayed":
                 raise Reject("replay", f"{mod}: {rj['verdict']}")
             thm_list += rj["theorems"]

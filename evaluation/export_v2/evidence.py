@@ -134,11 +134,12 @@ class EvidenceStore:
         return None, "; ".join(dict.fromkeys(r for r in reasons if r))
 
 
-def run_mirror(policy_json: Dict[str, Any], board: str, tree: Path, out_dir: Path, *, cap_gb: float = 10.0,
+def run_mirror(policy_json: Dict[str, Any], board: str, tree: Path, out_dir: Path, *, cap_gb: float = 12.0,
                timeout: int = 7200, python: str = sys.executable, stage_timeout: Optional[int] = None,
                fast: bool = False) -> Dict[str, Any]:
     """Run the tree's own harness on a policy and wrap the result as an envelope. The harness needs a BUILT Lean tree at the
-    epoch's pins, and takes minutes (PhaseProduct about 100 s, PhaseTripleProduct about 7 to 13 minutes, up to ~6 GB). The
+    epoch's pins, and takes minutes. Large PhaseTripleProduct certificates can exceed 10 GB on Linux. The shared 12 GB
+    replay cap applies to local checks, hosted verification and any replay during publication. The
     policy is written first and the harness hashes that very file, which is what binds the record to the policy. ``stage_timeout`` is the
     harness's own per-stage limit (its default is 3600 s; a PhaseProduct policy with an 8-way top band ran past it in the report stage).
     ``fast`` passes `--fast` to either harness: it skips the interpreted report stage (hours for an 8-way band: the interpreter never memoises
