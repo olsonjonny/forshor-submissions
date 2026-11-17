@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+
+\title{PhaseTripleProduct: the lowest-T point of a k = 8, k = 4 recursion}
+\author{olsonjonny}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Objective}
+PhaseTripleProduct board, $n = 2048$, $\delta = 0.01$, exact widths. This entry minimises the T count. It is not our best $Q \times T$: that is our earlier submission, olsonjonny\_sub1 ($k = 6$ then $k = 4$, $Q \times T = 5.069783 \times 10^{11}$).
+This policy trades about 540 more qubits for about 4.9\% fewer T gates.
+
+\section*{Starting point}
+The baseline we compared against is the starting policy (one band, $k = 4$, the planner's optimum over the tables in the Parallel sequences appendix of Kahanamoku-Meyer and Yao (2024)).
+The two tables here are new and use the same construction as olsonjonny\_sub1; neither reuses a table or a program from that paper.
+
+\section*{Construction}
+Two bands: $k = 8$ for $w \ge 1024$ and $k = 4$ for $128 \le w < 1024$; the leaf below.
+At $n = 2048$ the exact ladder is $2048{:}8 \to 292{:}4 \to 80{:}\mathrm{leaf}$: $22 \times 10 = 220$ leaves of width 80.
+The leaves carry almost all of the Toffolis (about $12w^2$ each), so a wide first split that leaves small leaves gives the lowest T; its price is the first level's guard (36 bits on 256-bit limbs), which raises $Q$.
+
+\emph{Points.} The contract admits $0$, $\infty$, $\pm 2^e$ and $\pm 2^{-e}$. For each table we took the $3k-2$ admissible points of smallest exact demand at the width where it is used:
+\begin{itemize}
+  \item $k = 8$ (at 2048): $0, \infty, \pm 1, \pm 2, \pm 4, \pm 8, \pm 16, \pm 32, \pm\tfrac12, \pm\tfrac14, \pm\tfrac18, \pm\tfrac1{16}$;
+  \item $k = 4$ (at 292, where $292 = 4 \times 73$ makes the signed top limb as wide as the others, so integer points are the cheaper ones): $0, \infty, \pm 1, \pm 2, \pm 4, \pm\tfrac12$.
+\end{itemize}
+
+\emph{Programs.} Integer points are accumulated in register $0$ and reciprocal points in register $k-1$ by \texttt{addScaled} with shifts, visited in the order that minimises the number of additions between consecutive rows, and undone at the end.
+No \texttt{negate} operations: 172 additions for $k = 8$ and 30 for $k = 4$. Each table's exact child width equals the width its points force.
+
+\section*{Prices}
+\texttt{starter.py price} (via \texttt{forshor policy ptp}) printed for this policy:
+\begin{itemize}
+  \item board (exact widths): $T = 73{,}588{,}582$; ladder $2048{:}8 \to 292{:}4 \to 80{:}\mathrm{leaf}$;
+  rotations $52{,}360 \times 72.5691$ T, Toffoli-class $17{,}447{,}216 \times 4$ T; engine 2 $73{,}588{,}582$ T (agree);
+  \item $Q = 7{,}095$ (live-qubit peak, formula); score $Q \times T = 5.221110 \times 10^{11}$;
+  \item cross-check (scanned widths, not the score): $719{,}928{,}091$ T, ladder $2048{:}8 \to 486{:}4 \to 161{:}4 \to 79{:}\mathrm{leaf}$.
+  The scan charges a bit per addition along a chain, so it is pessimistic for these long addition chains.
+\end{itemize}
+For comparison, the starting policy prices at $T = 97{,}630{,}311$ ($Q = 6{,}339$).
+
+\section*{What did not help}
+Priced in-process with the pack's own engine (the functions \texttt{starter.py price} calls), over every sequence of 1 to 4 levels with $k$ from 2 to 8, this was the lowest T.
+The next lowest were the same tables with the first level's output widened by 1 to 4 bits (for example $2048{:}8 \to 294{:}4 \to 81$), then $2048{:}7 \to 321{:}4 \to 88$; a third level, or $k = 5$ or $6$ at the second level, raised T.
+
+\section*{What is not proved}
+T counted in Python (Qualtran), not proved in Lean.
+Q is the live-qubit peak, a formula over the policy's widths, not proved in Lean for this policy.
+The site prices the policy again; its numbers are the ones that count.
+
+Prepared with Claude Code (Claude Opus 5.5) using the starter pack's engine.
+
+\end{document}
