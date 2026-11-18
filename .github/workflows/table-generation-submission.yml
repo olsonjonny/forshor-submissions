@@ -23,7 +23,7 @@ jobs:
   verify:
     name: Verify submission with Lean
     runs-on: ${{ vars.POLICY_RUNNER || 'ubuntu-24.04' }}
-    timeout-minutes: 30
+    timeout-minutes: 60
     # Four fixed queues, one active verifier and up to 100 pending in each.
     # The CLI distributes new branches across q0..q3. Existing/manual branch
     # names use q0. Never derive an unbounded group from untrusted branch text.

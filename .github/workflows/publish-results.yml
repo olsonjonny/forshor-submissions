@@ -20,7 +20,7 @@ jobs:
   publish:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     # One publisher at a time; do not drop intermediate accepted submissions.
     concurrency:
       group: forshor-publication

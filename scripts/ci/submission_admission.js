@@ -7,6 +7,8 @@ const REPOSITORY_ID = 1432460134;
 const VERIFY = '.github/workflows/table-generation-submission.yml';
 const ADMISSION = '.github/workflows/submission-admission.yml';
 const HOUR = 60 * 60 * 1000;
+// Verification is capped at 60 minutes (timeout-minutes in table-generation-submission.yml); twice that covers every attempt still running.
+const ACTIVE_WINDOW = 2 * HOUR;
 const DAY = 24 * HOUR;
 const keyOf = (id, attempt) => `${id}:${attempt}`;
 const positive = (n) => Number.isSafeInteger(n) && n > 0;
@@ -123,10 +125,10 @@ async function admit({ github, context, core, limits, now = Date.now() }) {
     return { allowed: true, duplicate: true };
   }
   const active = [];
-  // Verification is capped at 30 minutes and admission starts only after its
-  // runner starts. A whole hour conservatively covers every active attempt,
+  // Verification is capped at 60 minutes and admission starts only after its
+  // runner starts. Two hours conservatively cover every active attempt,
   // without spending API calls on a day's completed mathematical checks.
-  for (const r of new Map(records.filter((r) => r.at > now - HOUR).map((r) => [r.key, r])).values()) {
+  for (const r of new Map(records.filter((r) => r.at > now - ACTIVE_WINDOW).map((r) => [r.key, r])).values()) {
     if (r.sourceId === source.id) continue;
     const other = (await github.rest.actions.getWorkflowRun({ ...repo, run_id: r.sourceId })).data;
     if (other.status === 'in_progress' && other.run_attempt === r.attempt) active.push(other.html_url);

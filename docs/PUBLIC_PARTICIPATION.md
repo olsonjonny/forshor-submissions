@@ -22,8 +22,8 @@ the shared cached JSON data flow.
 
 | Work | Maximum active | Timeout |
 | --- | ---: | ---: |
-| Lean/exact-width verification, including setup | 4 | 30 minutes per job |
-| Trusted Qualtran, archive, publication and PR reporting | 1 | 20 minutes per job |
+| Lean/exact-width verification, including setup | 4 | 60 minutes per job |
+| Trusted Qualtran, archive, publication and PR reporting | 1 | 40 minutes per job |
 
 GitHub has no numeric repository-wide four-job setting. New CLI branch names
 are randomly assigned to `submission/q0/` through `submission/q3/`. The trusted
@@ -34,7 +34,7 @@ queue can wait while another is idle; this is not a shared work-stealing queue.
 Publication has its own single queue with 100 waiting jobs. Organization-wide
 runner limits can further reduce available capacity.
 
-The 30-minute verifier limit covers setup, ForShor, and the STO mirror together.
+The 60-minute verifier limit covers setup, ForShor, and the STO mirror together.
 The mirror also has a 10-minute overall limit. The 15-minute per-stage setting
 applies to individual STO replay stages; it does not set a ForShor deadline. The separately trusted main cache warmer may
 take up to 180 minutes; that is maintenance, not a per-submission allowance.

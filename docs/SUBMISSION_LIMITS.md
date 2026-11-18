@@ -36,7 +36,7 @@ trusted main control, not a copy of the control from the submission branch.
 
 The global admission lock makes each decision see the preceding reservation.
 The next decision checks whether previously admitted verifications are still
-active. The existing four global queues, 30-minute verification deadline,
+active. The existing four global queues, 60-minute verification deadline,
 cancellation of superseded PR commits, and separate trusted publication remain.
 There are no added Google credentials, databases, mutable quota branches, keys,
 or write tokens in either the verification or admission job.

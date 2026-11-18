@@ -112,7 +112,7 @@ test('completed older admissions still count for the day without requiring sourc
   const r = rig();
   r.runs.push(record(999, NOW - HOUR * 2));
   // No source lookup exists for 999. It cannot still be active after the
-  // verifier's 30-minute deadline, but its admitted attempt remains charged.
+  // verifier's 60-minute deadline, but its admitted attempt remains charged.
   assert.equal((await r.call()).allowed, true);
 });
 
@@ -139,7 +139,7 @@ test('the integration preserves read-only verification, global slots and PR canc
   const workflow = readFileSync('.github/workflows/table-generation-submission.yml', 'utf8');
   const gate = readFileSync('.github/workflows/submission-admission.yml', 'utf8');
   assert.ok(workflow.indexOf('Check submission quota before setup') < workflow.indexOf('Install Lean'));
-  assert.ok(workflow.includes('forshor-verification-') && workflow.includes('timeout-minutes: 30'));
+  assert.ok(workflow.includes('forshor-verification-') && workflow.includes('timeout-minutes: 60'));
   assert.ok(workflow.includes('cancel-in-progress: true'));
   assert.equal(/(?:contents|actions|checks|id-token): write/.test(workflow + gate), false);
   assert.equal((workflow + gate).includes('pull_request_target'), false);
